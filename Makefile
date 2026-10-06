@@ -86,6 +86,7 @@ OBJCOPY = $(TOOLPREFIX)objcopy
 OBJDUMP = $(TOOLPREFIX)objdump
 
 CFLAGS = -Wall -Werror -O -fno-omit-frame-pointer -ggdb -gdwarf-2
+CFLAGS += -Wno-error=unused-but-set-variable -Wno-error=incompatible-pointer-types
 
 ifdef LAB
 LABUPPER = $(shell echo $(LAB) | tr a-z A-Z)
