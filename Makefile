@@ -197,7 +197,10 @@ UPROGS=\
 	$U/_zombie\
 	$U/_sleep\
 	$U/_pingpong\
+	HEAD
 	$U/_du\
+	$U/_primes\
+
 
 
 
