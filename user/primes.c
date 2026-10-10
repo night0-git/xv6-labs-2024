@@ -1,5 +1,4 @@
 #include "kernel/types.h"
-#include "kernel/stat.h"
 #include "user/user.h"
 
 __attribute__((noreturn)) void
@@ -62,6 +61,11 @@ sieve(int read_pipe[2])
 int
 main(int argc, char *argv[])
 {
+  if (argc != 1) {
+    fprintf(2, "Usage: primes\n");
+    exit(1);
+  }
+
   int p[2];
   if (pipe(p) < 0) {
     fprintf(2, "primes: pipe failed\n");
