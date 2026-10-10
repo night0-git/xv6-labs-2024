@@ -200,7 +200,7 @@ UPROGS=\
 	$U/_primes\
 	$U/_diff\
 	$U/_tree\
-
+	$U/_cp\
 
 ifeq ($(LAB),syscall)
 UPROGS += \
