@@ -10,33 +10,26 @@ main(int argc, char *argv[])
   }
 
   int ptoc_pipe[2] = {0};
+  int ctop_pipe[2] = {0};
+
   if (pipe(ptoc_pipe) < 0) {
     fprintf(2, "pingpong: pipe failed\n");
     exit(1);
   }
-
-  int ctop_pipe[2] = {0};
   if (pipe(ctop_pipe) < 0) {
     fprintf(2, "pingpong: pipe failed\n");
     exit(1);
   }
 
-  // Create a child process.
-  int child_pid = fork();
-  if (child_pid < 0) {
+  int pid = fork();
+  if (pid < 0) {
     fprintf(2, "pingpong: fork failed\n");
     exit(1);
   }
 
-  if (child_pid == 0) { // child process
-    if (close(ptoc_pipe[1]) < 0) {
-      fprintf(2, "pingpong(parent): close failed\n");
-      exit(1);
-    }
-    if (close(ctop_pipe[0]) < 0) {
-      fprintf(2, "pingpong(parent): close failed\n");
-      exit(1);
-    }
+  if (pid == 0) {
+    close(ptoc_pipe[1]);
+    close(ctop_pipe[0]);
 
     char received;
     // Receive the byte from parent.
@@ -46,31 +39,19 @@ main(int argc, char *argv[])
       exit(1);
     }
     printf("%d: received ping\n", getpid());
-    if (close(ptoc_pipe[0]) < 0) {
-      fprintf(2, "pingpong(child): close failed\n");
-      exit(1);
-    }
+    close(ptoc_pipe[0]);
 
     // Send the byte back to parent.
     if (write(ctop_pipe[1], &received, 1) != 1) {
       fprintf(2, "pingpong(child): write failed\n");
       exit(1);
     }
-    if (close(ctop_pipe[1]) < 0) {
-      fprintf(2, "pingpong(child): close failed\n");
-      exit(1);
-    }
+    close(ctop_pipe[1]);
 
     exit(0);
-  } else { // parent process
-    if (close(ptoc_pipe[0]) < 0) {
-      fprintf(2, "pingpong(parent): close failed\n");
-      exit(1);
-    }
-    if (close(ctop_pipe[1]) < 0) {
-      fprintf(2, "pingpong(parent): close failed\n");
-      exit(1);
-    }
+  } else {
+    close(ptoc_pipe[0]);
+    close(ctop_pipe[1]);
 
     // The byte to be sent back and forth between parent and child.
     char buf = 'b';
@@ -80,10 +61,7 @@ main(int argc, char *argv[])
       fprintf(2, "pingpong(parent): write failed\n");
       exit(1);
     }
-    if (close(ptoc_pipe[1]) < 0) {
-      fprintf(2, "pingpong(parent): close failed\n");
-      exit(1);
-    }
+    close(ptoc_pipe[1]);
 
     char received;
     // Receive the byte from child.
@@ -93,10 +71,9 @@ main(int argc, char *argv[])
       exit(1);
     }
     printf("%d: received pong\n", getpid());
-    if (close(ctop_pipe[0]) < 0) {
-      fprintf(2, "pingpong(parent): close failed\n");
-    }
+    close(ctop_pipe[0]);
 
+    wait(0);
     exit(0);
   }
 }
