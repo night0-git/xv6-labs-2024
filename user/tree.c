@@ -105,9 +105,6 @@ main(int argc, char *argv[])
         exit(1);
       }
     } else {
-      if (strcmp(argv[i], "0") == 0) {
-        continue;
-      }
       if (path) {
         fprintf(2, "tree: multiple paths specified\n");
         fprintf(2, "Usage: tree [path] [-L depth] [-d]\n");
