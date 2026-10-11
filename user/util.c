@@ -1,0 +1,38 @@
+#include "kernel/types.h"
+#include "kernel/stat.h"
+#include "user/user.h"
+#include "user/util.h"
+
+int
+is_dir(char *path)
+{
+  struct stat st;
+
+  if (stat(path, &st) < 0) {
+    return 0;
+  }
+
+  return st.type == T_DIR;
+}
+
+char *
+join_path(char *dir, char *name)
+{
+  int dl = strlen(dir), nl = strlen(name);
+
+  char *p = malloc(dl + nl + 2);
+  if (p == 0) {
+    return 0;
+  }
+
+  memcpy(p, dir, dl);
+
+  if (dl > 0 && p[dl - 1] != '/') {
+    p[dl++] = '/';
+    p[dl] = '\0';
+  }
+
+  memcpy(p + dl, name, nl);
+
+  return p;
+}
