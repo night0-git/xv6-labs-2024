@@ -3,12 +3,7 @@
 #include "kernel/fcntl.h"
 #include "kernel/fs.h"
 #include "user/user.h"
-
-struct arguments {
-  const char *path;
-  int all;
-  int summary;
-};
+#include "user/util.h"
 
 void
 print_formatted(const char *path, int size)
@@ -36,28 +31,20 @@ print_size(const char *path, int all, int summary, int is_root)
 
   if (st.type == T_DIR) {
     while (read(fd, &de, sizeof(de)) == sizeof(de)) {
-      // Skip empty slots.
       if (de.inum == 0) {
         continue;
       }
-      // Skip to avoid infinite recursion.
       if (strcmp(de.name, ".") == 0 || strcmp(de.name, "..") == 0) {
         continue;
       }
 
-      // Construct the full path of the file/directory.
-      char file_path[512];
-      int path_len = strlen(path) + 1 + strlen(de.name);
-      if (path_len >= sizeof(file_path)) {
-        fprintf(2, "du: path too long: %s/%s\n", path, de.name);
+      char *file_path = join_path(path, de.name);
+      if (file_path == 0) {
+        fprintf(2, "du: out of memory\n");
         exit(1);
       }
-      memcpy(file_path, path, strlen(path));
-      file_path[strlen(path)] = '/';
-      memcpy(file_path + strlen(path) + 1, de.name, strlen(de.name));
-      file_path[path_len] = '\0';
-
       total_size += print_size(file_path, all, summary, 0);
+      free(file_path);
     }
 
     if (is_root || !summary) {
@@ -71,46 +58,37 @@ print_size(const char *path, int all, int summary, int is_root)
   return total_size;
 }
 
-void
-parse_args(int argc, char *argv[], struct arguments *args)
+int
+main(int argc, char *argv[])
 {
-  args->all = 0;
-  args->summary = 0;
+  int all = 0, summary = 0;
+  char *path = 0;
 
   for (int i = 1; i < argc; i++) {
     if (argv[i][0] == '-') {
       if (strcmp(argv[i], "-a") == 0) {
-        args->all = 1;
+        all = 1;
       } else if (strcmp(argv[i], "-s") == 0) {
-        args->summary = 1;
+        summary = 1;
       } else {
         fprintf(2, "du: unknown option %s\n", argv[i]);
         fprintf(2, "Usage: du [PATH] [-a] [-s]\n");
         exit(1);
       }
     } else {
-      if (args->path) {
+      if (path) {
         fprintf(2, "du: multiple paths specified\n");
         fprintf(2, "Usage: du [PATH] [-a] [-s]\n");
         exit(1);
       }
-      args->path = argv[i];
+      path = argv[i];
     }
   }
-
-  // Default to current directory.
-  if (!args->path) {
-    args->path = ".";
+  if (!path) {
+    path = ".";
   }
-}
 
-int
-main(int argc, char *argv[])
-{
-  struct arguments args;
-  parse_args(argc, argv, &args);
-
-  print_size(args.path, args.all, args.summary, 1);
+  print_size(path, all, summary, 1);
 
   exit(0);
 }
