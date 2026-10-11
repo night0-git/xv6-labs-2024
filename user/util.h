@@ -1,5 +1,5 @@
 int
-is_dir(char *path);
+is_dir(const char *path);
 
 char *
-join_path(char *dir, char *name);
+join_path(const char *dir, const char *name);
