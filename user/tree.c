@@ -10,16 +10,22 @@
 void
 tree(char *path, char *prefix, int level, int max_depth, int only_dir)
 {
-  int fd, count = 0, i;
   struct stat st;
   struct dirent de;
   char (*names)[DIRSIZ + 1];
 
-  if ((fd = open(path, O_RDONLY)) < 0) {
+  int fd = open(path, O_RDONLY);
+  if (fd < 0) {
     fprintf(2, "tree: cannot open %s\n", path);
-    return;
+    exit(1);
   }
-  if (fstat(fd, &st) < 0 || st.type != T_DIR) {
+
+  if (stat(path, &st) < 0) {
+    fprintf(2, "tree: cannot stat %s\n", path);
+    exit(1);
+  }
+
+  if (st.type != T_DIR) {
     close(fd);
     return;
   }
@@ -36,6 +42,7 @@ tree(char *path, char *prefix, int level, int max_depth, int only_dir)
     return;
   }
 
+  int count = 0;
   while (read(fd, &de, sizeof(de)) == sizeof(de)) {
     if (de.inum == 0) {
       continue;
@@ -58,7 +65,7 @@ tree(char *path, char *prefix, int level, int max_depth, int only_dir)
   }
   close(fd);
 
-  for (i = 0; i < count; i++) {
+  for (int i = 0; i < count; i++) {
     int last = (i == count - 1);
     printf("%s%s%s\n", prefix, last ? "└── " : "├── ", names[i]);
 
