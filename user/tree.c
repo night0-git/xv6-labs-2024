@@ -3,39 +3,14 @@
 #include "kernel/fs.h"
 #include "kernel/fcntl.h"
 #include "user/user.h"
+#include "user/util.h"
 
 #define NOLIMIT 0x7fffffff
 
-static int
-isdir(char *path)
-{
-  struct stat st;
-
-  if (stat(path, &st) < 0)
-    return 0;
-  return st.type == T_DIR;
-}
-
-static char *
-joinpath(char *dir, char *name)
-{
-  int dl = strlen(dir), nl = strlen(name);
-  char *p = malloc(dl + nl + 2);
-
-  if (p == 0)
-    return 0;
-  memmove(p, dir, dl);
-  if (dl > 0 && p[dl - 1] != '/')
-    p[dl++] = '/';
-  memmove(p + dl, name, nl);
-  p[dl + nl] = 0;
-  return p;
-}
-
 void
-tree(char *path, char *prefix, int level, int maxDepth, int onlyDir)
+tree(char *path, char *prefix, int level, int max_depth, int only_dir)
 {
-  int fd, cnt = 0, i;
+  int fd, count = 0, i;
   struct stat st;
   struct dirent de;
   char (*names)[DIRSIZ + 1];
@@ -62,38 +37,44 @@ tree(char *path, char *prefix, int level, int maxDepth, int onlyDir)
   }
 
   while (read(fd, &de, sizeof(de)) == sizeof(de)) {
-    if (de.inum == 0)
+    if (de.inum == 0) {
       continue;
-    if (strcmp(de.name, ".") == 0 || strcmp(de.name, "..") == 0)
-      continue;
-    memmove(names[cnt], de.name, DIRSIZ);
-    names[cnt][DIRSIZ] = 0;
-    if (onlyDir) {
-      char *child = joinpath(path, names[cnt]);
-      int d = child && isdir(child);
-      free(child);
-      if (!d)
-        continue;
     }
-    cnt++;
+    if (strcmp(de.name, ".") == 0 || strcmp(de.name, "..") == 0) {
+      continue;
+    }
+
+    memcpy(names[count], de.name, DIRSIZ);
+    names[count][DIRSIZ] = 0;
+    if (only_dir) {
+      char *child = join_path(path, names[count]);
+      int dir = child && is_dir(child);
+      free(child);
+      if (!dir) {
+        continue;
+      }
+    }
+    count++;
   }
   close(fd);
 
-  for (i = 0; i < cnt; i++) {
-    int last = (i == cnt - 1);
+  for (i = 0; i < count; i++) {
+    int last = (i == count - 1);
     printf("%s%s%s\n", prefix, last ? "└── " : "├── ", names[i]);
 
-    if (level >= maxDepth)
+    if (level >= max_depth) {
       continue;
-    char *child = joinpath(path, names[i]);
-    if (child == 0)
+    }
+    char *child = join_path(path, names[i]);
+    if (child == 0) {
       continue;
-    if (isdir(child)) {
+    }
+    if (is_dir(child)) {
       char *np = malloc(strlen(prefix) + 8);
       if (np) {
         strcpy(np, prefix);
         strcpy(np + strlen(prefix), last ? "    " : "│   ");
-        tree(child, np, level + 1, maxDepth, onlyDir);
+        tree(child, np, level + 1, max_depth, only_dir);
         free(np);
       }
     }
@@ -105,24 +86,41 @@ tree(char *path, char *prefix, int level, int maxDepth, int onlyDir)
 int
 main(int argc, char *argv[])
 {
-  char *path = ".";
-  int maxDepth = NOLIMIT, onlyDir = 0;
+  char *path = 0;
+  int max_depth = NOLIMIT, only_dir = 0;
 
   for (int i = 1; i < argc; i++) {
-    if (strcmp(argv[i], "-d") == 0) {
-      onlyDir = 1;
-    } else if (strcmp(argv[i], "-L") == 0) {
-      if (i + 1 >= argc || argv[i + 1][0] < '0' || argv[i + 1][0] > '9') {
-        fprintf(2, "usage: tree [path] [-L depth] [-d]\n");
+    if (argv[i][0] == '-') {
+      if (strcmp(argv[i], "-d") == 0) {
+        only_dir = 1;
+      } else if (strcmp(argv[i], "-L") == 0) {
+        if (i + 1 >= argc || argv[i + 1][0] < '0' || argv[i + 1][0] > '9') {
+          fprintf(2, "usage: tree [path] [-L depth] [-d]\n");
+          exit(1);
+        }
+        max_depth = atoi(argv[++i]);
+      } else {
+        fprintf(2, "tree: unknown option %s\n", argv[i]);
+        fprintf(2, "Usage: tree [path] [-L depth] [-d]\n");
         exit(1);
       }
-      maxDepth = atoi(argv[++i]);
     } else {
+      if (strcmp(argv[i], "0") == 0) {
+        continue;
+      }
+      if (path) {
+        fprintf(2, "tree: multiple paths specified\n");
+        fprintf(2, "Usage: tree [path] [-L depth] [-d]\n");
+        exit(1);
+      }
       path = argv[i];
     }
   }
+  if (!path) {
+    path = ".";
+  }
 
   printf("%s\n", path);
-  tree(path, "", 1, maxDepth, onlyDir);
+  tree(path, "", 1, max_depth, only_dir);
   exit(0);
 }
