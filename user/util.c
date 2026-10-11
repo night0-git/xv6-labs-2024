@@ -4,7 +4,7 @@
 #include "user/util.h"
 
 int
-is_dir(char *path)
+is_dir(const char *path)
 {
   struct stat st;
 
@@ -16,7 +16,7 @@ is_dir(char *path)
 }
 
 char *
-join_path(char *dir, char *name)
+join_path(const char *dir, const char *name)
 {
   int dl = strlen(dir), nl = strlen(name);
 
