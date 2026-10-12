@@ -30,7 +30,8 @@ print_size(const char *path, int all, int summary, int is_root)
   int total_size = st.size;
 
   if (st.type == T_DIR) {
-    while (read(fd, &de, sizeof(de)) == sizeof(de)) {
+    int bytes_read;
+    while ((bytes_read = read(fd, &de, sizeof(de))) == sizeof(de)) {
       if (de.inum == 0) {
         continue;
       }
@@ -45,6 +46,10 @@ print_size(const char *path, int all, int summary, int is_root)
       }
       total_size += print_size(file_path, all, summary, 0);
       free(file_path);
+    }
+    if (bytes_read < 0) {
+      fprintf(2, "du: cannot read directory %s\n", path);
+      exit(1);
     }
 
     if (is_root || !summary) {
