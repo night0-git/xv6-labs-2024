@@ -1,0 +1,27 @@
+Language: Cpp
+BasedOnStyle: LLVM
+IndentWidth: 2
+UseTab: Never
+ColumnLimit: 0
+
+# Functions have return types on a separate line.
+AlwaysBreakAfterReturnType: TopLevel
+
+# Braces.
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterFunction: true
+  AfterControlStatement: false
+  BeforeElse: false
+  AfterStruct: false
+  AfterEnum: false
+
+# Include sorting can shuffle headers and break xv6 compilation.
+SortIncludes: false
+
+# Spaces.
+PointerAlignment: Right
+
+# Keep single-line blocks single-line (if possible).
+AllowShortBlocksOnASingleLine: false
+AllowShortFunctionsOnASingleLine: false
