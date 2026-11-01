@@ -1,5 +1,5 @@
-#ifndef _PTREE_H_H
-#define _PTREE_H_H
+#ifndef _PTREE_H_
+#define _PTREE_H_
 
 #include "types.h"
 
