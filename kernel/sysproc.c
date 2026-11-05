@@ -111,7 +111,7 @@ sys_ptree(void)
 
   argaddr(0, &buf);
   argint(1, &max);
-  if(buf == 0 || max <= 0)
+  if (buf == 0 || max <= 0)
     return -1;
   return proc_ptree(buf, max);
 }

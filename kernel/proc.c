@@ -707,13 +707,13 @@ proc_ptree(uint64 dstva, int max)
   struct ptreeinfo info;
   int count = 0;
 
-  for(p = proc; p < &proc[NPROC]; p++){
-    if(count >= max)
+  for (p = proc; p < &proc[NPROC]; p++) {
+    if (count >= max)
       break;
 
     acquire(&wait_lock);
     acquire(&p->lock);
-    if(p->state == UNUSED){
+    if (p->state == UNUSED) {
       release(&p->lock);
       release(&wait_lock);
       continue;
@@ -724,7 +724,7 @@ proc_ptree(uint64 dstva, int max)
     info.memsize = p->sz;
     safestrcpy(info.name, p->name, sizeof(info.name));
 
-    if(p->parent)
+    if (p->parent)
       info.ppid = p->parent->pid;
     else
       info.ppid = 0;
@@ -732,7 +732,7 @@ proc_ptree(uint64 dstva, int max)
     release(&p->lock);
     release(&wait_lock);
 
-    if(copyout(curp->pagetable, dstva, (char *)&info, sizeof(info)) < 0)
+    if (copyout(curp->pagetable, dstva, (char *)&info, sizeof(info)) < 0)
       return -1;
 
     dstva += sizeof(info);
